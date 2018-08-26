@@ -10,8 +10,7 @@ import (
 	"syscall"
 
 	"github.com/braintree/manners"
-	"github.com/udacity/ud615/app/handlers"
-	"github.com/udacity/ud615/app/health"
+	"github.com/wanglianglin/ks001/app/handlers"
 )
 
 const version = "1.0.0"
@@ -19,28 +18,13 @@ const version = "1.0.0"
 func main() {
 	var (
 		httpAddr   = flag.String("http", "0.0.0.0:80", "HTTP service address.")
-		healthAddr = flag.String("health", "0.0.0.0:81", "Health service address.")
 	)
 	flag.Parse()
 
 	log.Println("Starting server...")
-	log.Printf("Health service listening on %s", *healthAddr)
 	log.Printf("HTTP service listening on %s", *httpAddr)
 
 	errChan := make(chan error, 10)
-
-	hmux := http.NewServeMux()
-	hmux.HandleFunc("/healthz", health.HealthzHandler)
-	hmux.HandleFunc("/readiness", health.ReadinessHandler)
-	hmux.HandleFunc("/healthz/status", health.HealthzStatusHandler)
-	hmux.HandleFunc("/readiness/status", health.ReadinessStatusHandler)
-	healthServer := manners.NewServer()
-	healthServer.Addr = *healthAddr
-	healthServer.Handler = handlers.LoggingHandler(hmux)
-
-	go func() {
-		errChan <- healthServer.ListenAndServe()
-	}()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handlers.HelloHandler)
@@ -66,7 +50,6 @@ func main() {
 			}
 		case s := <-signalChan:
 			log.Println(fmt.Sprintf("Captured %v. Exiting...", s))
-			health.SetReadinessStatus(http.StatusServiceUnavailable)
 			httpServer.BlockingClose()
 			os.Exit(0)
 		}
