@@ -30,7 +30,7 @@ $ go build -o server ./monolith
 ```
 
 ```
-$ ./server
+$ ./server -http :8088
 ```
 
 ```
